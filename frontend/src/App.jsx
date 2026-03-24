@@ -1,120 +1,165 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from 'react'
+import MessageBanner from './components/MessageBanner'
+import StaffForm from './components/StaffForm'
+import StaffList from './components/StaffList'
+import ShiftForm from './components/ShiftForm'
+import ShiftList from './components/ShiftList'
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api' //Can move this to an .env file for better practice, but hardcoding for simplicity in this example
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [staff, setStaff] = useState([])
+  const [shifts, setShifts] = useState([])
+  const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+
+  //Normally I would incorporate fetch functions in its own file for better separation of concerns, but including here for simplicity in this example
+  async function fetchStaff() {
+    const response = await fetch(`${API_BASE_URL}/staff`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+
+    const data = await response.json()
+    setStaff(data)
+  }
+
+  async function fetchShifts() {
+    const response = await fetch(`${API_BASE_URL}/shifts`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+
+    const data = await response.json()
+    setShifts(data)
+  }
+
+  useEffect(() => {
+    fetchStaff()
+    fetchShifts()
+  }, [])
+
+  async function createStaffMember(staffForm) {
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/staff`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(staffForm),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      const firstError =
+        data?.errors &&
+        Object.values(data.errors)[0] &&
+        Object.values(data.errors)[0][0]
+
+      setErrorMessage(firstError || data.message || 'Failed to create staff member.')
+      return false
+    }
+
+    setSuccessMessage('Staff member created successfully.')
+    await fetchStaff()
+    return true
+  }
+
+  async function createShift(shiftForm) {
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/shifts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(shiftForm),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      const firstError =
+        data?.errors &&
+        Object.values(data.errors)[0] &&
+        Object.values(data.errors)[0][0]
+
+      setErrorMessage(firstError || data.message || 'Failed to create shift.')
+      return false
+    }
+
+    setSuccessMessage('Shift created successfully.')
+    await fetchShifts()
+    return true
+  }
+
+  async function assignShift(shiftId, staffId) {
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    const response = await fetch(`${API_BASE_URL}/shifts/${shiftId}/assign`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        staff_id: Number(staffId),
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      const firstError =
+        data?.errors &&
+        Object.values(data.errors)[0] &&
+        Object.values(data.errors)[0][0]
+
+      setErrorMessage(firstError || data.message || 'Failed to assign shift.')
+      return false
+    }
+
+    setSuccessMessage('Shift assigned successfully.')
+    await fetchShifts()
+    return true
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-slate-100">
+      <div className="mx-auto max-w-6xl p-6">
+        <h1 className="mb-6 text-3xl font-bold text-slate-900">
+          Restaurant Staff Scheduling
+        </h1>
 
-      <div className="ticks"></div>
+        <MessageBanner
+          errorMessage={errorMessage}
+          successMessage={successMessage}
+        />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="mb-6 grid gap-6 md:grid-cols-2">
+          <StaffForm onSubmit={createStaffMember} />
+          <ShiftForm onSubmit={createShift} />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        <div className="grid gap-6 md:grid-cols-2">
+          <StaffList staff={staff} />
+          <ShiftList
+            shifts={shifts}
+            staff={staff}
+            onAssign={assignShift}
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 
