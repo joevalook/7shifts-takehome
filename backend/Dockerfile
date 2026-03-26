@@ -18,15 +18,15 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy project files
+# Copy backend project files
 COPY . .
 
-# Make sure SQLite file exists before Laravel scripts run
-RUN touch database/database.sqlite
+# Copy entrypoint outside bind-mounted app directory
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Install PHP dependencies
-RUN composer install
+# Make entrypoint executable
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
