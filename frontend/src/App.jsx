@@ -5,7 +5,7 @@ import StaffList from './components/StaffList'
 import ShiftForm from './components/ShiftForm'
 import ShiftList from './components/ShiftList'
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api' //Can move this to an .env file for better practice, but hardcoding for simplicity in this example
+const API_BASE_URL = 'http://localhost:8000/api' //Can move this to an .env file for better practice, but hardcoding for simplicity in this example
 
 function App() {
   const [staff, setStaff] = useState([])
